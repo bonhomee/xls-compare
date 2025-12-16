@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Comparador Balance vs DDP</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <main>
+      <header class="hero-header">
+        <div class="header-logo">
+          <img src="{{ url_for('static', filename='logo/poseidon.png') }}" alt="Logo" loading="lazy">
+        </div>
+        <div class="header-left">
+          <h1>Comparar Balance vs DDP</h1>
+          <p>Sube ambos archivos .xls/.xlsx y obtén un cuadro comparativo.</p>
+        </div>
+      </header>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <ul class="alerts">
+            {% for category, message in messages %}
+              <li class="alert {{ category }}">{{ message }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
+
+      <section class="card card-narrow">
+        <h2>Instrucciones</h2>
+          <ul>
+            <li>La version de la aplicación sólo compara los proveedores de la cuenta 400</li>
+            <li>Eliminar del DDP los pagos a proveedores de inmobilizado</li>
+          </ul>
+        </section>
+
+      <section class="card card-narrow">
+        <form method="post" enctype="multipart/form-data">
+          <div class="field-group">
+            <label for="balance_file">Archivo de Balance</label>
+            <input type="file" id="balance_file" name="balance_file" accept=".xls,.xlsx" required>
+          </div>
+          <div class="field-group">
+            <label for="ddp_file">Archivo DDP</label>
+            <input type="file" id="ddp_file" name="ddp_file" accept=".xls,.xlsx" required>
+          </div>
+          <button type="submit">Comparar</button>
+        </form>
+      </section>
+
+      {% if comparison %}
+        <section class="card">
+          <h2>Diferencias detectadas</h2>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th class="th-left">ID Proveedor</th>
+                  <th class="th-left">Nombre</th>
+                  <th class="amount">Balance</th>
+                  <th class="amount">DDP</th>
+                  <th class="amount">Diferencia</th>
+                  <th class="th-left">Observaciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in comparison.differences %}
+                  <tr class="mismatch">
+                    <td>{{ row.provider_id }}</td>
+                    <td>{{ row.provider_name }}</td>
+                    <td class="amount">{{ row.balance_amount|money }}</td>
+                    <td class="amount">{{ row.ddp_amount|money }}</td>
+                    <td class="amount">{{ row.difference|money }}</td>
+                    <td>{{ row.observation }}</td>
+                  </tr>
+                {% else %}
+                  <tr>
+                    <td colspan="5" class="empty">No se encontraron diferencias.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      {% endif %}
+    </main>
+<footer class="footer">
+  <div class="footer-content">
+    <p>&copy; 2025 Comparador Balance vs DDP · Todos los derechos reservados.</p>
+
+    <nav class="footer-links">
+      <a href="{{ url_for('main.documentation') }}" target="_blank" rel="noopener">Documentación</a>
+      <a href="https://github.com" target="_blank" rel="noopener">Repositorio</a>
+      <a href="#" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">Volver arriba</a>
+    </nav>
+  </div>
+</footer>
+  </body>
+</html>

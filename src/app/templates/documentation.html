@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Documentación | Comparador Balance vs DDP</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+      article { max-width: 900px; margin: 0 auto; display: grid; gap: 1.25rem; }
+      h1, h2 { color: #1d2559; }
+      section { background: var(--card); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05); }
+      ul { margin-left: 1.2rem; line-height: 1.6; }
+      code { background: #eef1ff; padding: 0.1rem 0.35rem; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header style="text-align:center;margin-bottom:1.5rem;">
+        <h1>Documentación</h1>
+          <p class="version-note"><span class="version-pill">v{{ app_version }}</span></p>
+      </header>
+      <article>
+        <section>
+          <h2>1. Resumen general</h2>
+          <p>La aplicación recibe dos archivos Excel:</p>
+          <ul>
+            <li><strong>Balance:</strong> exportado del programa contable. Sólo se usan las columnas A (ID proveedor), B (nombre) y F (saldo). Las 7 primeras filas son cabeceras que se descartan.</li>
+            <li><strong>DDP:</strong> rellenado manualmente. Se utilizan la columna B (nombre), C (ID abreviado) y D (importe). Las dos primeras filas se ignoran.</li>
+          </ul>
+          <p>Ambos ficheros deben ser <code>.xls</code> o <code>.xlsx</code>. El tamaño máximo por archivo es 16&nbsp;MB.</p>
+        </section>
+
+        <section>
+          <h2>2. Normalización de IDs</h2>
+          <ul>
+            <li><strong>Balance:</strong> el ID se limpia para dejar sólo dígitos y se rellena con ceros a la izquierda hasta obtener 9 caracteres.</li>
+            <li><strong>DDP:</strong> del número abreviado se toman los últimos 4 dígitos (si tiene menos, se usan todos). Si el resultado es 0 se fuerza a 1. Si el valor es inferior a 1000 se suma 1000 para garantizar que la cuarta cifra por la derecha sea un 1. Finalmente se construye el código <code>40000XXXX</code>.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>3. Limpieza de importes y nombres</h2>
+          <ul>
+            <li>Los importes se convierten a número eliminando comas y espacios. Valores vacíos o no numéricos se tratan como 0.</li>
+            <li>El nombre se toma siempre de la columna B de cada archivo. Si está vacío se reemplaza por cadena vacía.</li>
+            <li>En el DDP, si un proveedor aparece varias veces se suman sus importes y se conserva el primer nombre no vacío.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>4. Lógica de comparación</h2>
+          <ol>
+            <li>Se construyen dos diccionarios (Balance y DDP) indexados por el ID normalizado.</li>
+            <li>Solo se procesan IDs que existan en ambos archivos; si un ID no está en uno de los dos, se ignora.</li>
+            <li>Se calcula la diferencia como <code>DDP + Balance</code> (el Balance suele exportarse en negativo). Se muestran solo los resultados con diferencia distinta de 0.</li>
+            <li>La observación indica dónde sobra importe: “De más en DDP” si la suma es positiva, “De más en BALANCE” si es negativa.</li>
+          </ol>
+        </section>
+
+        <section>
+          <h2>5. Interfaz web</h2>
+          <ul>
+            <li><strong>Formulario de subida:</strong> selecciona ambos archivos y pulsa “Comparar”.</li>
+            <li><strong>Diferencias detectadas:</strong> tabla con Balance, DDP y diferencia (solo proveedores presentes en ambos archivos con diferencia distinta de 0).</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>6. Despliegue y mantenimiento</h2>
+          <ul>
+            <li>El servicio se ejecuta dentro del contenedor <code>xls-compare</code>, escuchando en el puerto 8000 interno, expuesto como 8083 en el host.</li>
+            <li>Comandos útiles:
+              <ul>
+                <li><code>sudo docker compose up -d --build xls-compare</code> &rightarrow; reconstruye y levanta el servicio tras cambios en el código.</li>
+                <li><code>sudo docker compose logs -f xls-compare</code> &rightarrow; revisa los logs en tiempo real.</li>
+              </ul>
+            </li>
+            <li>Las dependencias (Flask, pandas, etc.) se instalan desde <code>requirements.txt</code> dentro del contenedor.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>7. Limitaciones conocidas</h2>
+          <ul>
+            <li>No valida formato de columnas adicionales; si cambian las columnas (A/B/F o B/C/D) es necesario ajustar el código.</li>
+            <li>Los ID del DDP se derivan únicamente del número introducido en columna C; si se requiere otra regla hay que modificar la función <code>normalize_ddp_id</code>.</li>
+            <li>El tamaño máximo de archivo está limitado por la configuración <code>MAX_CONTENT_LENGTH</code> de Flask (16&nbsp;MB).</li>
+          </ul>
+        </section>
+
+        <!--
+        <section>
+          <h2>8. Versionado</h2>
+          <ul>
+            <li>La versión activa se almacena en el fichero <code>VERSION</code> en la raíz del proyecto y se carga automáticamente en la aplicación.</li>
+            <li>Se sigue SemVer (Mayor.Menor.Patch):
+              <ul>
+                <li><strong>Mayor</strong>: cambios incompatibles o rediseños grandes.</li>
+                <li><strong>Menor</strong>: nuevas funcionalidades que mantienen compatibilidad.</li>
+                <li><strong>Patch</strong>: correcciones, ajustes menores o mejoras internas.</li>
+              </ul>
+            </li>
+            <li>En cada entrega se actualiza el número de versión antes de hacer commit/tag y se refleja automáticamente en la UI y la documentación.</li>
+          </ul>
+        </section>
+        -->
+      </article>
+    </main>
+  </body>
+  <footer class="footer">
+  <div class="footer-content">
+    <p>&copy; 2025 Comparador Balance vs DDP · Todos los derechos reservados.</p>
+
+    <nav class="footer-links">
+      <a href="{{ url_for('main.documentation') }}" target="_blank" rel="noopener">Documentación</a>
+      <a href="https://github.com" target="_blank" rel="noopener">Repositorio</a>
+      <a href="#" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">Volver arriba</a>
+      <a href="{{ url_for('main.index') }}">Volver a la herramienta</a>
+    </nav>
+  </div>
+</footer>
+</html>

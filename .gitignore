@@ -1,0 +1,9 @@
+# Docker / pgAdmin data (permisos root)
+pgadmin/data/
+pgadmin/storage/
+
+# Backups
+*.tar.gz
+
+# Logs
+*.ls
