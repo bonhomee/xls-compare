@@ -1,3 +1,31 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+.env/
+.env.*
+.venv/
+
+# Flask
+instance/
+.flaskenv
+
+# Testing / cache
+.pytest_cache/
+.coverage
+
+# Logs
+*.log
+
+# Backups / archives
+*.tar.gz
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db
 # Docker / pgAdmin data (permisos root)
 pgadmin/data/
 pgadmin/storage/
